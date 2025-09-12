@@ -9,7 +9,6 @@ from typing import List
 from dotenv import load_dotenv
 load_dotenv()
 from authlib.integrations.starlette_client import OAuth
-from jose import jwt, JWTError
 from send_email import gmail_send_message
 from jose import jwt
 import psycopg2
