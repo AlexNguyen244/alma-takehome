@@ -76,7 +76,10 @@ I’ll be sending these via email, even though this is a take-home assignment. I
 2. token.json (created using client_secret.json)
 3. .env (used to store all sensitive secret variables)
 
-Add the required emails into the empty variables in the `.env` file:
-1. EMAIL_SENDER="email sender"
-2. PROSPECT_EMAIL="prospect email"
-3. ATTORNEY_EMAIL="attorney email"
+Add the required variables into the empty fields in the `.env` file:
+1. DB_NAME
+2. DB_USERNAME
+3. DB_PASSWORD
+1. EMAIL_SENDER
+2. PROSPECT_EMAIL
+3. ATTORNEY_EMAIL
