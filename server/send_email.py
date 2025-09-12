@@ -5,71 +5,98 @@ from googleapiclient.discovery import build
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
+from email.mime.image import MIMEImage
 from email.utils import formataddr
 from email import encoders
 from dotenv import load_dotenv
-load_dotenv()
-import os.path
-import base64
 import os
+import base64
+
+load_dotenv()
 
 SCOPES = ["https://www.googleapis.com/auth/gmail.send"]
 
 ############### Authenticate Gmail API ###############
 def gmail_auth():
-  creds = None
-  # The file token.json stores the user's access and refresh tokens, and is
-  # created automatically when the authorization flow completes for the first
-  # time.
-  if os.path.exists("token.json"):
-    creds = Credentials.from_authorized_user_file("token.json", SCOPES)
-  # If there are no (valid) credentials available, let the user log in.
-  if not creds or not creds.valid:
-    if creds and creds.expired and creds.refresh_token:
-      creds.refresh(Request())
-    else:
-      flow = InstalledAppFlow.from_client_secrets_file(
-          "client_secret.json", SCOPES
-      )
-      creds = flow.run_local_server(port=0)
-    # Save the credentials for the next run
-    with open("token.json", "w") as token:
-      token.write(creds.to_json())
-
-  return creds
+    creds = None
+    if os.path.exists("token.json"):
+        creds = Credentials.from_authorized_user_file("token.json", SCOPES)
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(
+                "client_secret.json", SCOPES
+            )
+            creds = flow.run_local_server(port=0)
+        with open("token.json", "w") as token:
+            token.write(creds.to_json())
+    return creds
 
 ############### Send Gmail ###############
 def gmail_send_message(firstName, lastName, email, resume_path):
     creds = gmail_auth()
 
     html = """
-    <html>
-        <body style="padding: 0 10px;">
-            <div>
-            <p>
-                This email provides a comprehensive report on a lead recently submitted, including key contact information and associated documentation. <br>
-                First Name: {firstName} <br>
-                Last Name: {lastName} <br>
-                Email: {email}
-            </p>
+        <html>
+          <body style="margin:0; padding:0; font-family: Arial, sans-serif; background-color:#f4f4f7;">
+            <div style="max-width:600px; margin:40px auto; background-color:#ffffff; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1); overflow:hidden; border:1px solid #e0e0e0;">
+              
+              <!-- Header -->
+              <div style="background-color:#4f46e5; text-align:center; padding:20px; display:flex; align-items:center; justify-content:center; gap:25px;">
+                  <img src="cid:alma_logo" alt="Alma Logo" style="width:40px; height:auto;">
+                  <div style="color:#fff; font-size:24px; font-weight:bold; line-height:40px; margin-left:15px;">Alma</div>
+              </div>
+              
+              <!-- Body -->
+              <div style="padding:30px 20px; color:#333;">
+                <h2 style="color:#111827;">New Lead Submitted</h2>
+                <p>Hello Team,</p>
+                <p>A new lead has been submitted through <strong>Alma</strong>. Below are the key details:</p>
+                <ul>
+                  <li><strong>First Name:</strong> {firstName}</li>
+                  <li><strong>Last Name:</strong> {lastName}</li>
+                  <li><strong>Email:</strong> {email}</li>
+                </ul>
+                <p>Please review the attached resume for further information.</p>
+                <p style="margin-top:20px;">
+                  <a href="{view_leads}" style="display:inline-block; padding:12px 20px; background-color:#4f46e5; color:#fff; text-decoration:none; border-radius:5px; font-weight:bold;">View Lead</a>
+                </p>
+              </div>
+              
+              <!-- Footer -->
+              <div style="background-color:#f4f4f7; text-align:center; padding:20px; font-size:14px; color:#9ca3af;">
+                <p>© 2025 Alma. All rights reserved.</p>
+              </div>
             </div>
-        </body>
-    </html>
-    """
+          </body>
+        </html>
+        """.format(firstName=firstName, lastName=lastName, email=email, view_leads="http://localhost:3000/view")
 
-    html = html.format(firstName=firstName,
-                       lastName=lastName,
-                       email=email)
-    
-    service = build("gmail", "v1", credentials=creds)
 
-    message = MIMEMultipart("mixed", None, [MIMEText(html, "html")])
-
+    message = MIMEMultipart("mixed")
     message["To"] = os.environ["PROSPECT_EMAIL"]
-    message['Cc'] = os.environ["ATTORNEY_EMAIL"]
+    message["Cc"] = os.environ["ATTORNEY_EMAIL"]
     message["From"] = formataddr(("Lead Alert", os.environ["EMAIL_SENDER"]))
     message["Subject"] = "Action required: A new lead has been submitted"
 
+    # Attach HTML body
+    msg_body = MIMEMultipart("related")
+    msg_body.attach(MIMEText(html, "html"))
+    message.attach(msg_body)
+
+    # Embed logo image
+    logo_path = "./images/logo.png"
+    if os.path.exists(logo_path):
+        with open(logo_path, "rb") as img:
+            logo = MIMEImage(img.read())
+            logo.add_header("Content-ID", "<alma_logo>")
+            logo.add_header("Content-Disposition", "inline", filename="logo.png")
+            msg_body.attach(logo)
+    else:
+        print(f"Logo file not found: {logo_path}")
+
+    # Attach resume
     if os.path.exists(resume_path):
         with open(resume_path, "rb") as f:
             part = MIMEBase("application", "octet-stream")
@@ -84,18 +111,14 @@ def gmail_send_message(firstName, lastName, email, resume_path):
         print(f"File not found: {resume_path}")
         return
 
-    # encoded message
+    # Encode and send
     encoded_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
-
     create_message = {"raw": encoded_message}
-    # pylint: disable=E1101
-    send_message = (
-        service.users()
-        .messages()
-        .send(userId="me", body=create_message)
-        .execute()
-    )
+
+    service = build("gmail", "v1", credentials=creds)
+    service.users().messages().send(userId="me", body=create_message).execute()
+
     print("Email sent successfully!")
 
 if __name__ == "__main__":
-  gmail_send_message()
+    pass

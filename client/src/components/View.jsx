@@ -1,48 +1,58 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function View() {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false); // new state for submit button
+  const [submitting, setSubmitting] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem("token"); // Get JWT from localStorage
+    const token = localStorage.getItem("token");
     if (!token) {
       console.error("No token found. User must log in.");
-      setLoading(false);
+      navigate("/error", { replace: true }); // Redirect to error page
       return;
     }
 
     fetch("http://localhost:8000/getLeads", {
-      headers: {
-        "Authorization": `Bearer ${token}`, // Attach JWT
-      },
+      headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
+        if (res.status === 403) {
+          // Unauthorized access
+          navigate("/error", { replace: true });
+          return;
+        }
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         return res.json();
       })
-      .then((data) => setLeads(data))
-      .catch((err) => console.error(err))
+      .then((data) => {
+        if (!data || data.length === 0) {
+          navigate("/error", { replace: true }); // No leads available
+        } else {
+          setLeads(data);
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        navigate("/error", { replace: true });
+      })
       .finally(() => setLoading(false));
-  }, []);
+  }, [navigate]);
 
   if (loading) return <p>Loading...</p>;
-  if (leads.length === 0) return <p>No leads available</p>;
 
-  // Dynamically get column names from the first row, except resume and id
-  const columns = Object.keys(leads[0]).filter((col) => col !== "resume" && col !== "id");
+  const columns = Object.keys(leads[0] || {}).filter(
+    (col) => col !== "resume" && col !== "id"
+  );
 
-  // Handle state dropdown change
   const handleStateChange = (id, newState) => {
     setLeads((prevLeads) =>
-      prevLeads.map((lead) =>
-        lead.id === id ? { ...lead, state: newState } : lead
-      )
+      prevLeads.map((lead) => (lead.id === id ? { ...lead, state: newState } : lead))
     );
   };
 
-  // Handle submit
   const handleSubmit = () => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -56,9 +66,9 @@ function View() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(leads), // send the full leads array
+      body: JSON.stringify(leads),
     })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
@@ -76,27 +86,31 @@ function View() {
   };
 
   return (
-    <div style={{ padding: "2rem" }}>
-      <h1>Leads Table</h1>
-      <p>Change the state for each lead as needed</p>
-      <table border="1" cellPadding="10">
+    <div className="p-8">
+      <h1 className="text-2xl font-bold mb-2">Leads Status</h1>
+      <p className="mb-4">Change the state for each lead as needed</p>
+
+      <table className="table-auto border-collapse border border-gray-400 w-full">
         <thead>
-          <tr>
+          <tr className="bg-gray-200">
             {columns.map((col) => (
-              <th key={col}>{col}</th>
+              <th key={col} className="border border-gray-400 px-4 py-2">
+                {col}
+              </th>
             ))}
-            <th>Resume</th>
+            <th className="border border-gray-400 px-4 py-2">Resume</th>
           </tr>
         </thead>
         <tbody>
           {leads.map((lead) => (
             <tr key={lead.id}>
               {columns.map((col) => (
-                <td key={col}>
+                <td key={col} className="border border-gray-400 px-4 py-2">
                   {col === "state" ? (
                     <select
                       value={lead.state}
                       onChange={(e) => handleStateChange(lead.id, e.target.value)}
+                      className="border border-gray-300 rounded p-1"
                     >
                       <option value="PENDING">PENDING</option>
                       <option value="REACHED_OUT">REACHED_OUT</option>
@@ -106,18 +120,11 @@ function View() {
                   )}
                 </td>
               ))}
-              <td>
+              <td className="border border-gray-400 px-4 py-2">
                 {lead.resume ? (
                   <button
                     onClick={() => window.open(lead.resume, "_blank")}
-                    style={{
-                      padding: "0.3rem 0.6rem",
-                      background: "#4CAF50",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                    }}
+                    className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600"
                   >
                     View
                   </button>
@@ -130,19 +137,12 @@ function View() {
         </tbody>
       </table>
 
-      {/* Submit button */}
       <button
         onClick={handleSubmit}
         disabled={submitting}
-        style={{
-          marginTop: "1rem",
-          padding: "0.5rem 1rem",
-          background: submitting ? "#ccc" : "#007BFF",
-          color: "white",
-          border: "none",
-          borderRadius: "4px",
-          cursor: submitting ? "not-allowed" : "pointer",
-        }}
+        className={`mt-4 px-4 py-2 rounded text-white ${
+          submitting ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+        }`}
       >
         {submitting ? "Submitting..." : "Submit"}
       </button>

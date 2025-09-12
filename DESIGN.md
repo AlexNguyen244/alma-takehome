@@ -7,7 +7,7 @@ I selected React as the front-end JavaScript library and TailwindCSS for styling
 This was my first time using FastAPI, but I was able to quickly grasp the framework due to my prior experience with Python and backend development. Previously, I had built backends using Node.js and Express.js, and I found FastAPI easier to work with, particularly because it integrates seamlessly with other Python tools, such as the Gmail API.
 
 ### Email
-I implemented email alerts using the Gmail API with my own Google Cloud credentials. I chose this approach because of my prior experience with the Gmail API, which allowed me to quickly and efficiently implement the feature.
+I implemented email alerts using the Gmail API with my own Google Cloud credentials. I chose this approach due to my prior experience with the Gmail API, which enabled me to implement the feature quickly and efficiently. The notification sender is stored in the `EMAIL_SENDER` variable, while emails can be sent to both a prospect and an attorney using the `PROSPECT_EMAIL` and `ATTORNEY_EMAIL` variables. The prospect’s email is placed in the `To` field, and the attorney’s email is included in the `Cc` field.
 
 ### Authentication & Authorization
 Authentication is handled using the Google OAuth API, which securely verifies a user’s identity when they log in.
@@ -32,3 +32,6 @@ The PostgreSQL database consists of two primary tables: `users` and `leads`.
 
 ### Filesystem
 I use my local computer as the file storage system for all lead resumes. Each PDF is named using the portion of the email before the @ symbol combined with a timestamp, ensuring a unique filename. This approach allows the frontend to reliably display the PDF when the user clicks the "View" button.
+
+## Error Handling
+Error handling is implemented to prevent unauthenticated users from accessing the `/view` URL, redirecting them to an error page. Logging out returns the user to the homepage. Additionally, only if the user has an admin role will the "View Leads" button becomes visible.

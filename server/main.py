@@ -120,13 +120,8 @@ async def submit_form(
     exists = cursor.fetchone()
 
     if exists:
-        return {
-            "message": "Lead with this email already exists.",
-            "firstName": firstName,
-            "lastName": lastName,
-            "email": email
-        }
-
+        raise HTTPException(status_code=400, detail="Lead with this email already exists.")
+    
     # Remove unsafe characters and add timestamp after email to create ID
     safe_email = re.sub(r'[^a-zA-Z0-9]', '', email.split('@')[0])
     unique_id = f"{safe_email}{int(time.time()*1000)}"

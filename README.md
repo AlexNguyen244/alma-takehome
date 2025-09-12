@@ -9,12 +9,7 @@ Note: `npm install` installs everything in your package.json file that isn't alr
 1. npx create-react-app client
 2. cd frontend
 3. npm i react-router-dom@6
-4. npm install jwt-decode
-5. npm i @heroicons/react
-6. npm i @headlessui/react
-7. npm i @tailwindcss/forms
-8. npm i @tailwindcss/aspect-ratio
-9. npm i jwt-decode
+4. npm i jwt-decode
 
 ### Run the front-end:
 
