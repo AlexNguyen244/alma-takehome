@@ -21,10 +21,11 @@ Note: `npm install` installs everything in your package.json file that isn't alr
 
 1. mkdir server
 2. cd server
-3. pip install python-dotenv
-4. pip install psycopg2-binary
-5. pip install authlib python-jose[cryptography]
-6. pip install itsdangerous
+3. pip install fastapi "uvicorn[standard]"
+4. pip install python-dotenv
+5. pip install psycopg2-binary
+6. pip install authlib "python-jose[cryptography]"
+7. pip install itsdangerous
 
 ### Run the back-end:
 
