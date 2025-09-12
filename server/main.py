@@ -9,6 +9,7 @@ from typing import List
 from dotenv import load_dotenv
 load_dotenv()
 from authlib.integrations.starlette_client import OAuth
+from jose import jwt, JWTError
 from send_email import gmail_send_message
 from jose import jwt
 import psycopg2
@@ -16,6 +17,7 @@ import time
 import re
 import os
 
+################## Database Connection ##################
 try:
     connection = psycopg2.connect(
         host = os.environ["DB_HOSTNAME"],
@@ -26,12 +28,10 @@ try:
     )
 
     cursor = connection.cursor()
-    query = 'SELECT * FROM public."leads"'
-    cursor.execute(query)
-
 except Exception as err:
     print("Database connection error:", err)
 
+################## APP Setup ##################
 app = FastAPI()
 
 app.add_middleware(
@@ -48,6 +48,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+################## Google Auth ##################
 oauth = OAuth()
 oauth.register(
     name="google",
@@ -57,6 +58,7 @@ oauth.register(
     client_kwargs={"scope": "openid email profile"},
 )
 
+################## JWT Configuration ##################
 SECRET_KEY = os.getenv("JWT_SECRET")
 auth_scheme = HTTPBearer()
 
@@ -67,6 +69,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(auth_sc
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
+################## Routes ##################
 @app.get("/login")
 async def login(request: Request):
     redirect_uri = os.getenv("GOOGLE_REDIRECT_URI")

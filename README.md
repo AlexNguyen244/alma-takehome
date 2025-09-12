@@ -34,7 +34,7 @@ Note: `npm install` installs everything in your package.json file that isn't alr
 
 ## Create Database Tables
 
-Two tables need to be created in PostgreSQL: one to store all leads data and another to manage user roles. Once the tables are set up, you MUST manually insert a user with admin privileges by adding their email and assigning them the admin role. The admin will play the role as the attorney that will be able to view the leads and check it state as REACHED_OUT.
+Two tables need to be created in PostgreSQL: one to store all leads data and another to manage user roles. There are two roles available `user` and `admin`. Once the tables are set up, you MUST manually insert a user with admin privileges by adding their email and assigning them the admin role. The admin will play the role as the attorney that will be able to view the leads and check it state as REACHED_OUT.
 
 ### Create `leads` table 
 ```sql
