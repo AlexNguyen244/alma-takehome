@@ -16,8 +16,10 @@ load_dotenv()
 
 SCOPES = ["https://www.googleapis.com/auth/gmail.send"]
 
-############### Authenticate Gmail API ###############
-def gmail_auth():
+def gmail_send_message(firstName, lastName, email, resume_path):
+    """Directly send an email using Gmail API without extra client classes."""
+    
+    # Authenticate Gmail
     creds = None
     if os.path.exists("token.json"):
         creds = Credentials.from_authorized_user_file("token.json", SCOPES)
@@ -29,15 +31,11 @@ def gmail_auth():
                 "client_secret.json", SCOPES
             )
             creds = flow.run_local_server(port=0)
-        with open("token.json", "w") as token:
-            token.write(creds.to_json())
-    return creds
+        with open("token.json", "w") as token_file:
+            token_file.write(creds.to_json())
 
-############### Send Gmail ###############
-def gmail_send_message(firstName, lastName, email, resume_path):
-    creds = gmail_auth()
-
-    html = """
+    # Create email
+    html_content = """
         <html>
           <body style="margin:0; padding:0; font-family: Arial, sans-serif; background-color:#f4f4f7;">
             <div style="max-width:600px; margin:40px auto; background-color:#ffffff; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1); overflow:hidden; border:1px solid #e0e0e0;">
@@ -73,52 +71,41 @@ def gmail_send_message(firstName, lastName, email, resume_path):
         </html>
         """.format(firstName=firstName, lastName=lastName, email=email, view_leads="http://localhost:3000/view")
 
-
     message = MIMEMultipart("mixed")
     message["To"] = os.environ["PROSPECT_EMAIL"]
     message["Cc"] = os.environ["ATTORNEY_EMAIL"]
     message["From"] = formataddr(("Lead Alert", os.environ["EMAIL_SENDER"]))
     message["Subject"] = "Action required: A new lead has been submitted"
 
-    # Attach HTML body
+    # Attach HTML
     msg_body = MIMEMultipart("related")
-    msg_body.attach(MIMEText(html, "html"))
+    msg_body.attach(MIMEText(html_content, "html"))
     message.attach(msg_body)
 
-    # Embed logo image
+    # Embed logo
     logo_path = "./images/logo.png"
     if os.path.exists(logo_path):
-        with open(logo_path, "rb") as img:
-            logo = MIMEImage(img.read())
+        with open(logo_path, "rb") as img_file:
+            logo = MIMEImage(img_file.read())
             logo.add_header("Content-ID", "<alma_logo>")
             logo.add_header("Content-Disposition", "inline", filename="logo.png")
             msg_body.attach(logo)
-    else:
-        print(f"Logo file not found: {logo_path}")
 
     # Attach resume
     if os.path.exists(resume_path):
-        with open(resume_path, "rb") as f:
+        with open(resume_path, "rb") as resume_file:
             part = MIMEBase("application", "octet-stream")
-            part.set_payload(f.read())
+            part.set_payload(resume_file.read())
             encoders.encode_base64(part)
             part.add_header(
                 "Content-Disposition",
                 f'attachment; filename="{os.path.basename(resume_path)}"'
             )
             message.attach(part)
-    else:
-        print(f"File not found: {resume_path}")
-        return
 
     # Encode and send
-    encoded_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
-    create_message = {"raw": encoded_message}
-
+    encoded_msg = base64.urlsafe_b64encode(message.as_bytes()).decode()
     service = build("gmail", "v1", credentials=creds)
-    service.users().messages().send(userId="me", body=create_message).execute()
+    service.users().messages().send(userId="me", body={"raw": encoded_msg}).execute()
 
     print("Email sent successfully!")
-
-if __name__ == "__main__":
-    pass
