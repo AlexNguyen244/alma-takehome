@@ -1,11 +1,12 @@
 import { RouterProvider, createBrowserRouter } from "react-router-dom"; 
 import { useEffect, useState, useRef } from "react";
-import { jwtDecode } from "jwt-decode"; // Named import
+import { jwtDecode } from "jwt-decode";
 import HomePage from "./pages/HomePage";
 import RootPage from "./pages/RootPage";
 import ErrorPage from "./pages/ErrorPage";
 import CreatePage from "./pages/CreatePage";
 import ViewPage from "./pages/ViewPage";
+import logoutIcon from "./images/logout.png";
 import "./App.css";
 
 function App() {
@@ -84,10 +85,17 @@ function App() {
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition font-medium"
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition font-medium flex items-center space-x-2 cursor-pointer"
             >
-              {userEmail}
+              <span>{userEmail}</span>
+              <img
+                src={logoutIcon}
+                alt="Logout"
+                onClick={handleLogout}
+                className="w-6 h-6"
+              />
             </button>
+
             {dropdownOpen && (
               <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-300 rounded shadow-lg z-50">
                 <button

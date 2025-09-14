@@ -1,14 +1,13 @@
-# app/database.py
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 # Read database credentials from environment variables
-DB_HOST = os.environ.get("DB_HOSTNAME", "localhost")
+DB_HOST = os.environ.get("DB_HOSTNAME")
 DB_NAME = os.environ.get("DB_NAME")
 DB_USER = os.environ.get("DB_USERNAME")
 DB_PASS = os.environ.get("DB_PASSWORD")
-DB_PORT = os.environ.get("DB_PORT", "5432")
+DB_PORT = os.environ.get("DB_PORT")
 
 # SQLAlchemy database URL
 DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"

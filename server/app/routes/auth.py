@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import RedirectResponse
 from authlib.integrations.starlette_client import OAuth
-from jose import jwt
 from sqlalchemy.orm import Session
+from jose import jwt
+import os
 
 from app.config import SECRET_KEY, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI
 from app.database import SessionLocal
@@ -46,8 +47,8 @@ async def auth_callback(request: Request, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == user_email).first()
 
     if not user:
-        # Create new user
-        user = User(email=user_email, role="user")
+        role = "admin" if user_email == os.getenv("ADMIN_EMAIL") else "user"
+        user = User(email=user_email, role=role)
         db.add(user)
         db.commit()
         db.refresh(user)

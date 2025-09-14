@@ -17,8 +17,6 @@ load_dotenv()
 SCOPES = ["https://www.googleapis.com/auth/gmail.send"]
 
 def gmail_send_message(firstName, lastName, email, resume_path):
-    """Directly send an email using Gmail API without extra client classes."""
-    
     # Authenticate Gmail
     creds = None
     if os.path.exists("token.json"):
