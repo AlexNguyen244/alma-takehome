@@ -26,12 +26,18 @@ Note: `npm install` installs everything in your package.json file that isn't alr
 5. pip install psycopg2-binary
 6. pip install authlib "python-jose[cryptography]"
 7. pip install itsdangerous
+8. pip install SQLAlchemy
+9. pip install alembic
 
 ### Run the back-end:
 
 1. Open new terminal
 2. Navigate to `/alma-takehome/server/`
 3. Then enter `uvicorn main:app --reload`
+
+## Update Database using alembic
+1. alembic revision --autogenerate -m "describe change"
+2. alembic upgrade head
 
 ## Create Database Tables
 

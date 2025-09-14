@@ -11,7 +11,7 @@ function ViewPage() {
     const token = localStorage.getItem("token");
     if (!token) {
       console.error("No token found. User must log in.");
-      navigate("/error", { replace: true }); // Redirect to error page
+      navigate("/error", { replace: true });
       return;
     }
 
@@ -20,7 +20,6 @@ function ViewPage() {
     })
       .then((res) => {
         if (res.status === 403) {
-          // Unauthorized access
           navigate("/error", { replace: true });
           return;
         }
@@ -28,11 +27,7 @@ function ViewPage() {
         return res.json();
       })
       .then((data) => {
-        if (!data || data.length === 0) {
-          navigate("/error", { replace: true }); // No leads available
-        } else {
-          setLeads(data);
-        }
+        setLeads(data || []); // Set leads to empty array if no data
       })
       .catch((err) => {
         console.error(err);
@@ -43,7 +38,15 @@ function ViewPage() {
 
   if (loading) return <p>Loading...</p>;
 
-  const columns = Object.keys(leads[0] || {}).filter(
+  if (leads.length === 0) {
+    return (
+      <div className="p-8 border border-gray-300 rounded bg-yellow-100 text-yellow-800">
+        No leads found
+      </div>
+    );
+  }
+
+  const columns = Object.keys(leads[0]).filter(
     (col) => col !== "resume" && col !== "id"
   );
 
@@ -55,10 +58,7 @@ function ViewPage() {
 
   const handleSubmit = () => {
     const token = localStorage.getItem("token");
-    if (!token) {
-      console.error("No token found. Cannot submit.");
-      return;
-    }
+    if (!token) return;
 
     setSubmitting(true);
 
@@ -75,7 +75,6 @@ function ViewPage() {
         return res.json();
       })
       .then((data) => {
-        console.log("Update successful:", data);
         alert("Leads updated successfully!");
       })
       .catch((err) => {
